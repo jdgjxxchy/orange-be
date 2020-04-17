@@ -12,24 +12,24 @@
 from flask_sqlalchemy import SQLAlchemy
 from aiocqhttp import CQHttp
 from config import BaseConfig, REDIS
-from quart import request
-from quart_cors import route_cors
+from sanic_cors import CORS
+from utils.Request import Request
 
 import aioredis
 import asyncio
+import time
 
 bot = CQHttp(enable_http_post=False)
+CORS(bot.server_app)
 bot.server_app.config.from_object(BaseConfig)
 db = SQLAlchemy(bot.server_app)
 
-async def init():
-    from utils.Request import Request
+@bot.server_app.listener("after_server_start")
+async def init(app):
     from utils.common import saveGold
-    bot.redis = await aioredis.create_redis_pool(REDIS)
     bot.req = Request()
+    bot.redis = await aioredis.create_redis_pool(REDIS)
     asyncio.ensure_future(saveGold(bot.req))
-
-bot.server_app.before_serving(init)
 
 @bot.on_message('group')
 async def handle_group_msg(context):
@@ -43,6 +43,7 @@ async def handle_group_msg(context):
         # print(reply)
         try:
             await bot.send(context, message=reply)
+            pass
         except:
             print("被禁言了?")
 
@@ -75,18 +76,16 @@ async def on_ws_team(group):
     await handle_ws_team(group, bot)
 
 @bot.server_app.route('/http/<command>')
-@route_cors()
-async def on_handle_index(command):
+async def on_handle_index(request, command):
     from views.urls import handle_http
     token = request.headers.get("token")
     return await handle_http(command, bot, token)
 
 @bot.server_app.route('/login', methods=['POST'])
-@route_cors()
-async def handle_login():
+async def handle_login(request):
     from views.urls import login
     form = await request.get_json()
     return await login(form['username'], form["password"], form["groupNumber"])
 
 if __name__ == '__main__':
-    bot.run(host='127.0.0.1', port=9876)
+    bot.run(host='127.0.0.1', port=9876, use_reloader=False)

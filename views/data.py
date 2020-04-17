@@ -49,7 +49,7 @@ async def getRobotInfo(user, bot):
         "robots": json.load(open('src/robots.json', 'r')),
         "list": [],
     }
-    for robot in bot._connected_ws_reverse_api_clients:
+    for robot in bot._wsr_api_clients:
         info = await bot.get_group_list(self_id=int(robot))
         res = getDays(info)
         s["list"].append({
@@ -58,9 +58,6 @@ async def getRobotInfo(user, bot):
         })
     return jsonify(s)
 
-async def getMoney(user, bot):
-    if user.qq != '986859110':
-        return jsonify({})
 
 def getGroupList(user):
     if user.qq != '986859110':

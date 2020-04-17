@@ -1,7 +1,0 @@
-Flask-SQLAlchemy
-mysql-connector-python
-quart==0.6.15
-aiocqhttp==0.7.0
-pillow
-quart_cors==0.2.0
-aioredis

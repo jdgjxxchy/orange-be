@@ -170,7 +170,7 @@ def drawTeam(team, group):
     img.setTitle(title)
     str = imageToBase64(img.canvas)
     s = f'[CQ:image,file=base64://{str}]'
-    url = 'http://orange.arkwish.com'
+    url = 'https://orange.arkwish.com'
     s += '修改昵称 XXX 修改自己昵称(中间加空格)\n修改团名 XXX 修改团队名称\n' \
          '模板设置及调队等更多功能复制到浏览器 ' + url
     return s

@@ -30,8 +30,9 @@ async def addTime(context):
         now = datetime.date.today() + datetime.timedelta(days=days)
         Group(group=groupNumber, name=groupNumber, expire=now, robot=context['user_id']).add()
     else:
-        now = group.expire + datetime.timedelta(days=days)
-        group.expire = now
+        now = datetime.date.today()
+        if now > group.expire: group.expire = now
+        now = group.expire = group.expire + datetime.timedelta(days=days)
         group.save()
     return f"续费成功, {groupNumber} 群已续费到{now}"
 

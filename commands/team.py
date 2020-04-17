@@ -87,7 +87,7 @@ async def getTeam(context):
         text = '本群有以下团\n'
         for index, team in enumerate(teams, start=1):
             text += f'{index}. 于{team.startTime}开的{team.name},权限:{team.sign}\n'
-        url = 'http://orange.arkwish.com'
+        url = 'https://orange.arkwish.com'
         text += '[查看团队 团队编号] 查看具体信息\n' \
                 '网页查看和编辑复制到浏览器:  ' + url
         return text

@@ -190,6 +190,7 @@ async def getMoney(user, data, bot):
     if user.qq != '986859110':
         return json.dumps({'req': 'error', 'data': '你谁?调用这个接口?'})
     index = 0
+    err = []
     for i in data:
         days = i['days']
         index += 1
@@ -200,5 +201,8 @@ async def getMoney(user, data, bot):
             text = f'{s}\n小橙今天结束就要到时间拉'
         else:
             text = f'{s}\n小橙已经过期{-days}天拉'
-        await bot.send_group_msg(self_id=i['robot'], group_id=i['group'], message=text)
-    return json.dumps({'req': 'putHong', 'data': '催费成功'})
+        try:
+            await bot.send_group_msg(self_id=i['robot'], group_id=i['group'], message=text)
+        except:
+            err.append(str(i['group']))
+    return json.dumps({'req': 'putHong', 'data': f'催费成功{str(index)}个群, {" ".join(err)}失败'})
