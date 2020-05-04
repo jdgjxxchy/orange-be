@@ -130,13 +130,12 @@ def fileToBase64(url):
     img = Image.open(url)
     return imageToBase64(img)
 
-def drawTeam(team, group):
+async def drawTeam(team, group):
     i = 0
     members = json.loads(team.members)
     title = team.startTime + '  ' + group.name + '团  ' + team.name
     img = Canvas(200, 80)
     img.setTip(team.tip)
-    group.save()
     for dic in members:
         if 'occu' not in dic and 'occuList' not in dic :
             i += 1
@@ -144,7 +143,7 @@ def drawTeam(team, group):
         name = ''
         if 'player' in dic:
             if 'id' in dic['player']:
-                user = User().getById(dic['player']['id'])
+                user = await User.get_or_none(id=dic['player']['id'])
                 if user: nickname = user.name
                 else: nickname = '已删除群员'
             elif 'name' in dic['player']:
@@ -155,8 +154,9 @@ def drawTeam(team, group):
         name2 = ''
         if 'client' in dic:
             if 'whose' in dic['client']:
-                user = User().getById(dic['client']['whose'])
-                nickname = user.name
+                user = await User.get_or_none(id=dic['client']['whose'])
+                if user: nickname = user.name
+                else: nickname = '已删除群员'
             else:
                 nickname = ''
             name2 = nickname[:6] if len(nickname) > 6 else nickname

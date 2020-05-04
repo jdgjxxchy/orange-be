@@ -16,7 +16,6 @@ from utils.common import gap, find_in_dic
 from utils.draw import drawTeam
 from views.handlers import sendData
 from views.data import getTeamDetail, getUserDetail
-from main import db
 import datetime
 import json
 import asyncio
@@ -25,7 +24,7 @@ import functools
 # 开团
 async def startTeam(context):
     group = context['info']['group']
-    teams = Team().getByGroup(group)
+    teams = await Team.filter(group=group, delete_at=None).all()
     if context['message'] == '开团':
         return  \
             '开团指令为:"开团 副本类型 时间"\n' \
@@ -44,14 +43,14 @@ async def startTeam(context):
     if len(a) > 2:
         templateId = a[2]
         if not templateId.isdigit(): return '请输入正确的模板号. 回复"模板"获取帮助'
-        templates = Template().getByGroup(group)
+        templates = await Template.filter(group=group).all()
         tId = int(templateId)
         if tId > len(templates): return f"没有编号为{tId}的模板"
         template = templates[int(templateId) - 1].members
         text += f'\n模板{tId}使用成功'
     team = Team(qq=user.qq, name=a[0], startTime=a[1], group=group)
     if template: team.members = template
-    team.add()
+    await team.save()
     await sendData(group.group, context['info']['bot'], getTeamDetail(team, 'createTeam'))
     return text
 
@@ -60,7 +59,7 @@ async def cancelTeam(context):
     group = context['info']['group']
     user = context['info']['user']
     if user.auth[1] != '1': return '你没有权限取消开团'
-    teams = Team().getByGroup(group)
+    teams = await Team.filter(group=group, delete_at=None).all()
     if not teams: return '目前没有准备开的团!'
     if context['message'] in ['取消开团', '取消团队', '删除团队']:
         text = '本群有以下团:\n'
@@ -73,7 +72,7 @@ async def cancelTeam(context):
     n = int(a) - 1
     if n >= len(teams) or n < 0: return f'没有编号为{a}的团'
     teams[n].delete_at = datetime.datetime.now()
-    teams[n].save()
+    await teams[n].save()
     text = f'于{teams[n].startTime}开的{teams[n].name}取消成功'
     await sendData(group.group, context['info']['bot'], json.dumps({'req': 'delTeam', 'data': {'id': teams[n].id}}))
     return text
@@ -81,7 +80,7 @@ async def cancelTeam(context):
 # 查看团队
 async def getTeam(context):
     group = context['info']['group']
-    teams = Team().getByGroup(group)
+    teams = await Team.filter(group=group, delete_at=None).all()
     if context['message'] in ['查看团队']:
         if not teams: return '目前没有人在开团, 请联系管理员开团'
         text = '本群有以下团\n'
@@ -95,8 +94,7 @@ async def getTeam(context):
     if len(a) != 1 or not a[0].isdigit(): return '请输入正确的团队编号 例如[查看团队 1]'
     n = int(a[0])
     if n > len(teams) or n < 1: return f'没有编号为{n}的团'
-    loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(None, functools.partial(drawTeam, teams[n - 1], group))
+    return await drawTeam(teams[n - 1], group)
 
 
 def nobody(member):
@@ -104,12 +102,13 @@ def nobody(member):
 
 # 报名
 async def signUp(context):
+    import time
 
     if context['message'] in ['报名', '我要报名']:
         return "报名格式: 我要报名 职业 团队编号\n团队编号请回复 查看团队 获取\n职业和团队编号之间要有空格,团队编号不填默认为1"
     user = context['info']['user']
     group = context['info']['group']
-    teams = Team().getByGroup(group)
+    teams = await Team.filter(group=group, delete_at=None).all()
     isD = '代' in context['message']
     a = context['message'].replace('报名', '').replace('我要', '').replace('代','').strip().split(' ')
     occu, occuOrigin = find_in_dic(context['message'], occuDic)
@@ -162,14 +161,14 @@ async def signUp(context):
             "occu": occuIndex,
         })
         team.alternate = json.dumps(alt, ensure_ascii=False)
-        team.save()
+        await team.save()
         await sendData(group.group, context['info']['bot'], getTeamDetail(team))
         return '没有报名的位置拉, 已将您报名的该职业加入替补列表, 团长安排的时候会在网页的替补名单看到您.'
     members[position]['player'] = { "id" :user.id }
     members[position]['occu'] = occuIndex
     if isDouble: members[position]['double'] = True
     team.members = json.dumps(members, ensure_ascii=False)
-    team.save()
+    await team.save(update_fields=["members", "alternate"])
     await sendData(group.group, context['info']['bot'], getTeamDetail(team))
     return f'{user.name}成功报名于{team.startTime}发车的{team.name}\n查看团队情况 请回复"查看团队 {teamNum+1}" 取消报名请回复"取消报名 {teamNum+1}" '
 
@@ -180,7 +179,7 @@ async def cancelSignUp(context):
                '团队编号请回复 查看团队 获取 如果一个团只报名了一种职业,则可以不填.'
     user = context['info']['user']
     group = context['info']['group']
-    teams = Team().getByGroup(group)
+    teams = await Team.filter(group=group, delete_at=None).all()
     occu, occuPre = find_in_dic(context['message'], occuDic)
     a = context['message'].replace('取消报名', '').strip()
     if occu: a = a.replace(occuPre, '').strip()
@@ -200,7 +199,7 @@ async def cancelSignUp(context):
                 del i['player']
                 if 'double' in i: del i['double']
                 team.members = json.dumps(members, ensure_ascii=False)
-                team.save()
+                await team.save()
                 await sendData(group.group, context['info']['bot'], getTeamDetail(team))
                 return f'{user.name}在{team.startTime}开的{team.name}报名的{signOccu}已取消报名成功'
         return f'您并没有报名于{team.startTime}开的{team.name}'
@@ -217,7 +216,7 @@ async def recordClient(context):
     user = context['info']['user']
     group = context['info']['group']
     if user.auth[3] != '1': return '您没有权限登记老板'
-    teams = Team().getByGroup(group)
+    teams = await Team.filter(group=group, delete_at=None).all()
     occu, preOccu = find_in_dic(context['message'], occuDic)
     if not occu: return '老板的职业和团队编号之间要记得空格, 老板职业必须为剑网三职业'
     occuIndex = occuList.index(occu)
@@ -251,7 +250,7 @@ async def recordClient(context):
     members[position]['client'] = { 'whose': user.id, 'tip': tip}
     members[position]['occu'] = occuIndex
     team.members = json.dumps(members, ensure_ascii=False)
-    team.save()
+    await team.save()
     await sendData(group.group, context['info']['bot'], getTeamDetail(team))
     return f'老板登记成功!{user.name}喊的 {occu} 老板已登记到于{team.startTime}发车的{team.name}团队\n输入"查看团队 {teamNum+1}"即可查看'
 
@@ -269,7 +268,7 @@ async def cancelClient(context):
     user = context['info']['user']
     group = context['info']['group']
     if user.auth[3] != '1': return '您没有权限取消老板'
-    teams = Team().getByGroup(group)
+    teams = await Team.filter(group=group, delete_at=None).all()
     clients = getClientsFromTeam(teams, user)
     if context['message'] in ['取消老板','删除老板']:
         text = "你目前喊到的老板如下:\n"
@@ -280,19 +279,18 @@ async def cancelClient(context):
     if not (a.isdigit() and int(a)<=len(clients) and int(a)>0):
         return "请输入正确格式 取消老板 老板序号. 获得编号请回复 取消老板"
     c = clients[int(a) - 1]
-    print(c)
     members = json.loads(teams[c[0] - 1].members)
     del members[c[2]]['client']
     if 'player' not in members[c[2]]: del members[c[2]]['occu']
     teams[c[0] - 1].members = json.dumps(members, ensure_ascii=False)
-    teams[c[0] - 1].save()
+    await teams[c[0] - 1].save()
     await sendData(group.group, context['info']['bot'], getTeamDetail(teams[c[0] - 1]))
     return f'老板取消成功!{user.name}在团队 {c[0]} 喊的 {c[1]} 老板已取消\n输入"查看团队 {c[0]}"即可查看'
 
 async def getClients(context):
     user = context['info']['user']
     group = context['info']['group']
-    teams = Team().getByGroup(group)
+    teams = await Team.filter(group=group, delete_at=None).all()
     clients = getClientsFromTeam(teams, user)
     if context['message'] in ['查看老板']:
         text = "你目前喊到的老板如下:\n"
@@ -315,15 +313,18 @@ async def editName(context):
     group = context['info']['group']
     try:
         if len(a) == 2:
-            user.changeName(a[1])
+            user.name = a[1]
+            await user.save()
             await sendData(group.group, context['info']['bot'], getUserDetail(user, 'putUser'))
             return f'{user.qq}成功修改昵称为{a[1]},修改昵称群内CD5秒 建议去网页修改'
         if len(a) == 3 and a[2].isdigit():
             if user.auth[0] == '0': return '对不起,您没有权限修改他人昵称'
-            User().changeOtherName(a[2], group, a[1])
+            try:
+                await User.filter(qq=a[2],group=group).all().update(name=a[1])
+            except:
+                return '未在群内找到该QQ'
             return '成功将{}的昵称修改为{}'.format(a[2], a[1])
     except:
-        db.session.rollback()
         return '输入有误,无法修改昵称'
 
 # 修改团名
@@ -334,10 +335,10 @@ async def editTeamName(context):
     user = context['info']['user']
     if user.auth[1] == '0': return '对不起,您没有权限修改团名'
     name = context['message'].replace('修改团名','').strip()
+    group.name = name
     try:
-        group.changeName(name)
+        await group.save()
     except:
-        db.session.rollback()
         return "团队名称含有非法字符."
     return '团队修改成功!团名为%s' % name
 
@@ -351,10 +352,11 @@ async def setTip(context):
     if context['message'] in ['设置团队备注']: return text
     a = context['message'].replace('设置团队备注', '').strip().split(' ')
     if not (len(a)== 2 and a[0].isdigit()): return text
-    teams = Team().getByGroup(group)
+    teams = await Team.filter(group=group, delete_at=None).all()
     teamNum = int(a[0])
     if teamNum > len(teams) or teamNum < 1: return f"没有编号为{teamNum}的团"
-    teams[teamNum-1].setTip(a[1])
+    teams[teamNum-1].tip = a[1]
+    await teams[teamNum-1].save()
     await sendData(group.group, context['info']['bot'], getTeamDetail(teams[teamNum-1]))
     return f"团队备注修改成功! 回复 查看团队 {teamNum} 即可查看"
 
@@ -368,10 +370,11 @@ async def setSignAuth(context):
     if context['message'] in ['设置报名权限']: return text
     a = context['message'].replace('设置报名权限', '').strip().split(' ')
     if not (len(a) == 2 and a[0].isdigit() and a[1].isdigit()): return text
-    teams = Team().getByGroup(group)
+    teams = await Team.filter(group=group, delete_at=None).all()
     teamNum = int(a[0])
     if teamNum > len(teams) or teamNum < 1: return f"没有编号为{teamNum}的团"
-    teams[teamNum - 1].setSign(a[1])
+    teams[teamNum - 1].sign = a[1]
+    await teams[teamNum - 1].save()
     await sendData(group.group, context['info']['bot'], getTeamDetail(teams[teamNum-1]))
     return f"团队权限修改成功回复 查看团队 {teamNum} 即可查看"
 

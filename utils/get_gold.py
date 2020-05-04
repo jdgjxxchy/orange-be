@@ -15,7 +15,6 @@ import time
 import json
 from models import Gold
 from pyquery import PyQuery as pq
-from main import db
 
 
 def parse5173(content):
@@ -94,7 +93,7 @@ async def parseOfficial(req, data):
 
 
 async def get_gold(req, area):
-    gold = Gold().getGoldByArea(area)
+    gold = await Gold.get_or_none(area=area)
     if gold is None:
         return
     res = {}
@@ -104,9 +103,8 @@ async def get_gold(req, area):
     res['5173'] = parse5173(await req.get_http(url5173))
     res['post'] = await parseTieba(req, urlPost)
     res['official'] = await parseOfficial(req, urlOfficial)
-    gold = Gold().getGoldByArea(area)
     gold.gold = json.dumps(res, ensure_ascii=False)
-    gold.save()
+    await gold.save()
 
 if __name__ == '__main__':
     from utils.Request import Request

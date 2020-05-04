@@ -11,9 +11,9 @@
 """
 
 import asyncio
-from quart import websocket, copy_current_websocket_context
 from config import REDIS
 from views.urls import handleData, getUser
+from quart import websocket, copy_current_websocket_context
 
 import aioredis
 
@@ -37,7 +37,7 @@ async def handle_ws_team(group, bot):
             if (data == 'ping'):
                 await websocket.send('pong')
             else:
-                user = getUser(token)
+                user = await getUser(token)
                 await handleData(user, bot, data)
             await asyncio.sleep(0)
 

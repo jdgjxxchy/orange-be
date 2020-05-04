@@ -3,20 +3,20 @@
 
 
 from models import Team, User, Template, Hong, Gold, Group
+from tortoise.query_utils import Q
 from utils.dicts import occuList
 from quart import jsonify
 import datetime
-from main import db
 
 import json
 
-def getUser(token):
-    return User().getByToken(token)
+async def getUser(token):
+    return await User.get_or_none(token=token)
 
-def getGoldList(user):
+async def getGoldList(user):
     if user.qq != '986859110':
         return jsonify({})
-    golds = Gold().query.all()
+    golds = await Gold.all()
     res = []
     for gold in golds:
         res.append({
@@ -28,10 +28,10 @@ def getGoldList(user):
         })
     return jsonify(res)
 
-def getDays(info):
+async def getDays(info):
     today = datetime.date.today()
     for groupDic in info:
-        group = Group().getByGroup(groupDic['group_id'])
+        group = await Group.get_or_none(group=groupDic['group_id'])
         del groupDic['member_count']
         del groupDic['max_member_count']
         if group:
@@ -51,7 +51,7 @@ async def getRobotInfo(user, bot):
     }
     for robot in bot._wsr_api_clients:
         info = await bot.get_group_list(self_id=int(robot))
-        res = getDays(info)
+        res = await getDays(info)
         s["list"].append({
             "robot": int(robot),
             "res": res
@@ -59,10 +59,10 @@ async def getRobotInfo(user, bot):
     return jsonify(s)
 
 
-def getGroupList(user):
+async def getGroupList(user):
     if user.qq != '986859110':
         return jsonify({})
-    groups = Group().query.all()
+    groups = await Group.all()
     now = datetime.date.today()
     res = []
     for group in groups:
@@ -70,7 +70,7 @@ def getGroupList(user):
             res.append({
                 "id": group.id,
                 "group": group.group,
-                "expire": group.expire,
+                "expire": str(group.expire),
                 "days": (group.expire - now).days,
                 "robot": group.robot,
                 "maxTeam": group.maxTeam,
@@ -80,8 +80,9 @@ def getGroupList(user):
     return jsonify(res)
 
 
-def getTeamList(user):
-    teams = Team().getByGroup(user.group)
+async def getTeamList(user):
+    group = await user.group
+    teams = await Team.filter(group=group, delete_at=None).all()
     res = []
     for team in teams:
         res.append({
@@ -98,8 +99,9 @@ def getTeamList(user):
         })
     return jsonify(res)
 
-def getUserList(user):
-    users = User().getByGroup(user.group)
+async def getUserList(user):
+    group = await user.group
+    users = await User.filter(group=group).all()
     res = []
     for user in users:
         res.append({
@@ -112,10 +114,11 @@ def getUserList(user):
         })
     return jsonify(res)
 
-def getHongList(user):
+async def getHongList(user):
     res = []
+    group = await user.group
     for occu in occuList:
-        hong = Hong().getByOccu(occu, user.group.group)
+        hong = await Hong.filter(Q(occu=occu), Q(group=group.group) | Q(group='0')).order_by('group').all()
         if len(hong) > 0:
             content = hong[0].content
         else:
@@ -126,9 +129,10 @@ def getHongList(user):
         })
     return jsonify(res)
 
-def getTemplates(user):
+async def getTemplates(user):
     res = {'req': 'getTemplateList'}
-    temps = Template().getByGroup(user.group)
+    group = await user.group
+    temps = await Template.filter(group=group).all()
     res["data"] = []
     for temp in temps:
         res["data"].append({
@@ -139,8 +143,8 @@ def getTemplates(user):
         })
     return json.dumps(res, ensure_ascii=False)
 
-def getUserInfo(user):
-    group = user.group
+async def getUserInfo(user):
+    group = await user.group
     res = {
         "user_id": user.id,
         "qq": user.qq,
@@ -153,7 +157,7 @@ def getUserInfo(user):
         "maxTeam": group.maxTeam,
         "maxTemplate": group.maxTemplate,
         "maxQA": group.maxQA,
-        "expire": group.expire,
+        "expire": str(group.expire),
     }
     return jsonify(res)
 

@@ -17,6 +17,7 @@ import datetime
 from models import Hong, Gold
 from utils.dicts import occuDic, areaSocketList, areaDict, occuY, yaoDic
 from utils.common import find_in_dic, gap
+from tortoise.query_utils import Q
 
 
 # 查宏
@@ -24,7 +25,7 @@ from utils.common import find_in_dic, gap
 async def getHong(context):
     group = context['group_id']
     occu, _ = find_in_dic(context['message'], occuDic)
-    hong = Hong().getByOccu(occu, group)
+    hong = await Hong.filter(Q(occu=occu), Q(group=group) | Q(group='0')).order_by('-group').all()
     if len(hong) > 0:
         content = hong[0].content
         if content == '':
@@ -50,7 +51,7 @@ async def setHong(context):
     if not occu: return "输入不合法"
     content = context['message'].replace('设置宏', '').replace(preOccu, '', 1).strip()
     if len(content) > 250: return "宏内容太长, 无法设置"
-    return Hong().setHong(qq, group, occu, content) + '\n设置宏 群内冷却100秒'
+    return await Hong.setHong(qq, group, occu, content) + '\n设置宏 群内冷却100秒'
 
 
 # 开服监控
@@ -89,7 +90,7 @@ async def getYao(context):
 @gap('gold', 100)
 async def getGold(context):
     area, _ = find_in_dic(context['message'], areaDict)
-    res = Gold().getGoldByArea(area)
+    res = await Gold.get_or_none(area=area)
     if res:
         gold = json.loads(res.gold)
         reply = f'{area}服务器的金价为:\n' \

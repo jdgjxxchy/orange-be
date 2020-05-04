@@ -68,9 +68,6 @@ startswith_group = {
     # '自定义问答': getQA,
     '剩余时间': leftTime,
     '续费': leftTime,
-
-    #管理员指令
-    'G': groupAdmin,
 }
 
 endswith_group = {
@@ -85,6 +82,7 @@ endswith_group = {
 
 async def parse_group(context):
     context['message'] = re.sub(' +', ' ', context['message']).strip()
+
     if await preHandle(context):
         return ''
 
@@ -105,7 +103,6 @@ async def parse_group(context):
 startswith_private = {
     '续费': addTime,
     '设置宏': setHongAdmin,
-    '更新': update,
     '退群': exitGroup,
 }
 

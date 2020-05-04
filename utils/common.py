@@ -21,7 +21,6 @@ import random
 import asyncio
 import string
 
-from main import db
 
 def find_in_dic(s, dic):
     for key in dic:
@@ -37,21 +36,22 @@ def gap(cmd, sec):
             if TIMINGDEBUG:
                 return await func(context)
             group = context['group_id']
-            last = Gap().find(group)
+            last, _ = await Gap.get_or_create({},group=group)
             lastTime = getattr(last, cmd)
             now = time.time()
             if lastTime and now - lastTime < sec:
                 return ''
             reply = await func(context)
             if reply and not reply.startswith('**'):
-                last.setTime(cmd, now)
+                setattr(last, cmd, now)
+                await last.save()
             return reply
         return bar
     return foo
 
 async def preHandle(context):
     from views.handlers import sendData
-    group = Group().getByGroup(str(context['group_id']))
+    group = await Group.get_or_none(group=str(context['group_id']))
     if not group:
         return True
     context['info']['group'] = group
@@ -59,7 +59,7 @@ async def preHandle(context):
     expire = group.expire
     if now > expire:
         return True
-    user = User().getByQG(str(context['user_id']), group)
+    user = await User.filter(qq=str(context['user_id']), group=group).first()
     if not user:
         if 'card' not in context['sender']:
             return True
@@ -69,13 +69,11 @@ async def preHandle(context):
             user.auth = '2111'
         elif context['sender']['role'] == 'admin':
             user.auth = '1111'
-        db.session.add(user)
         try:
-            db.session.commit()
+            await user.save()
         except:
-            db.session.rollback()
             user.name = str(context['user_id'])
-            user.add()
+            await user.save()
         finally:
             await sendData(group.group, context['info']['bot'], getUserDetail(user, 'createUser'))
     context['info']['user'] = user

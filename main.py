@@ -9,23 +9,29 @@
 @time: 2020/1/7
 
 """
-from flask_sqlalchemy import SQLAlchemy
+from tortoise.contrib.quart import register_tortoise
 from aiocqhttp import CQHttp
-from config import BaseConfig, REDIS
-from sanic_cors import CORS
+from quart import request
+from config import REDIS
 from utils.Request import Request
+from quart_cors import route_cors
 
 import aioredis
 import asyncio
 import time
 
 bot = CQHttp(enable_http_post=False)
-CORS(bot.server_app)
-bot.server_app.config.from_object(BaseConfig)
-db = SQLAlchemy(bot.server_app)
 
-@bot.server_app.listener("after_server_start")
-async def init(app):
+register_tortoise(
+    bot.server_app,
+    db_url="mysql://root:jdgjxxchy_0820@localhost:3306/orange",
+    # db_url="mysql://root:Hpxt2020hpxt!@localhost:3306/orange",
+    modules={"models": ["models"]},
+    generate_schemas=False,
+)
+
+@bot.server_app.before_first_request
+async def init():
     from utils.common import saveGold
     bot.req = Request()
     bot.redis = await aioredis.create_redis_pool(REDIS)
@@ -69,23 +75,29 @@ async def handle_group_request(context):
     context['bot'] = bot
     await handle_request(context)
 
-
 @bot.server_app.websocket('/team/<group>')
 async def on_ws_team(group):
     from views.team import handle_ws_team
     await handle_ws_team(group, bot)
 
-@bot.server_app.route('/http/<command>')
-async def on_handle_index(request, command):
+@bot.server_app.route('/http/<command>', methods=["GET", "OPTIONS"])
+@route_cors()
+async def on_handle_index(command):
     from views.urls import handle_http
     token = request.headers.get("token")
     return await handle_http(command, bot, token)
 
-@bot.server_app.route('/login', methods=['POST'])
-async def handle_login(request):
-    from views.urls import login
-    form = await request.get_json()
+@bot.server_app.route('/login', methods=["POST", "OPTIONS"])
+@route_cors()
+async def handle_login():
+    from views.handlers import login
+    form = await request.json
     return await login(form['username'], form["password"], form["groupNumber"])
 
 if __name__ == '__main__':
-    bot.run(host='127.0.0.1', port=9876, use_reloader=False)
+
+    bot.run(
+        host='0.0.0.0',
+        port=9876,
+        debug=False,
+    )
