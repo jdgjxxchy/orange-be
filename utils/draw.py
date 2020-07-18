@@ -136,8 +136,10 @@ async def drawTeam(team, group):
     title = team.startTime + '  ' + group.name + '团  ' + team.name
     img = Canvas(200, 80)
     img.setTip(team.tip)
+    signedPlayer = 0
+    signedClient = 0
     for dic in members:
-        if 'occu' not in dic and 'occuList' not in dic :
+        if 'occu' not in dic and 'occuList' not in dic:
             i += 1
             continue
         name = ''
@@ -146,8 +148,10 @@ async def drawTeam(team, group):
                 user = await User.get_or_none(id=dic['player']['id'])
                 if user: nickname = user.name
                 else: nickname = '已删除群员'
+                signedPlayer += 1
             elif 'name' in dic['player']:
                 nickname = dic['player']['name']
+                signedPlayer += 1
             else:
                 nickname = ''
             name = nickname[:6] if len(nickname) > 6 else nickname
@@ -155,6 +159,7 @@ async def drawTeam(team, group):
         if 'client' in dic:
             if 'whose' in dic['client']:
                 user = await User.get_or_none(id=dic['client']['whose'])
+                signedClient += 1
                 if user: nickname = user.name
                 else: nickname = '已删除群员'
             else:
@@ -167,10 +172,9 @@ async def drawTeam(team, group):
         else:
             img.setOccus(i, dic['occuList'])
         i += 1
-    img.setTitle(title)
+    img.setTitle(title + f' ({signedPlayer}/{signedClient}/25)')
     str = imageToBase64(img.canvas)
     s = f'[CQ:image,file=base64://{str}]'
     url = 'https://orange.arkwish.com'
-    s += '修改昵称 XXX 修改自己昵称(中间加空格)\n修改团名 XXX 修改团队名称\n' \
-         '模板设置及调队等更多功能复制到浏览器 ' + url
+    s += f'更多功能至浏览器打开: {url}'
     return s

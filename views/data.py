@@ -49,7 +49,8 @@ async def getRobotInfo(user, bot):
         "robots": json.load(open('src/robots.json', 'r')),
         "list": [],
     }
-    for robot in bot._wsr_api_clients:
+    robot_list = bot._wsr_api_clients.copy()
+    for robot in robot_list:
         info = await bot.get_group_list(self_id=int(robot))
         res = await getDays(info)
         s["list"].append({
@@ -118,7 +119,7 @@ async def getHongList(user):
     res = []
     group = await user.group
     for occu in occuList:
-        hong = await Hong.filter(Q(occu=occu), Q(group=group.group) | Q(group='0')).order_by('group').all()
+        hong = await Hong.filter(Q(occu=occu), Q(group=group.group) | Q(group='0')).order_by('-group').all()
         if len(hong) > 0:
             content = hong[0].content
         else:

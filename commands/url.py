@@ -35,6 +35,10 @@ startswith_group = {
     '查看老板': getClients,
     '取消老板': cancelClient,
     '删除老板': cancelClient,
+    '开启代报名': openReplace,
+    '关闭代报名': closeReplace,
+
+    '咕咕': gugu,
 
     '修改昵称': editName,
     '改名': editName,
@@ -55,6 +59,8 @@ startswith_group = {
     '开服': monitorArea,
     # '副本': getFB,
     # '攻略': getFB,
+    '开启金价': openReplace,
+    '关闭金价': closeReplace,
 
     #管理开关
     # '功能开关' : funcOpen,
@@ -104,6 +110,7 @@ startswith_private = {
     '续费': addTime,
     '设置宏': setHongAdmin,
     '退群': exitGroup,
+    '重启': restart,
 }
 
 async def parse_private(context):

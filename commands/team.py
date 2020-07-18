@@ -18,6 +18,7 @@ from views.handlers import sendData
 from views.data import getTeamDetail, getUserDetail
 import datetime
 import json
+import re
 import asyncio
 import functools
 
@@ -88,7 +89,7 @@ async def getTeam(context):
             text += f'{index}. 于{team.startTime}开的{team.name},权限:{team.sign}\n'
         url = 'https://orange.arkwish.com'
         text += '[查看团队 团队编号] 查看具体信息\n' \
-                '网页查看和编辑复制到浏览器:  ' + url
+                '更多功能及使用说明至浏览器打开:  ' + url
         return text
     a = context['message'].replace('查看团队', '').strip().split(' ')
     if len(a) != 1 or not a[0].isdigit(): return '请输入正确的团队编号 例如[查看团队 1]'
@@ -110,6 +111,8 @@ async def signUp(context):
     group = context['info']['group']
     teams = await Team.filter(group=group, delete_at=None).all()
     isD = '代' in context['message']
+    if isD and group.canReplace == False:
+        return "管理员设置了禁止代报名 可以联系管理员去网页帮填"
     a = context['message'].replace('报名', '').replace('我要', '').replace('代','').strip().split(' ')
     occu, occuOrigin = find_in_dic(context['message'], occuDic)
     if not occu or (a[0].replace(occuOrigin, '').replace('双修','').replace('双休','') != ''):
@@ -287,6 +290,38 @@ async def cancelClient(context):
     await sendData(group.group, context['info']['bot'], getTeamDetail(teams[c[0] - 1]))
     return f'老板取消成功!{user.name}在团队 {c[0]} 喊的 {c[1]} 老板已取消\n输入"查看团队 {c[0]}"即可查看'
 
+
+async def gugu(context):
+    msg = context['message']
+    user = context['info']['user']
+    group = context['info']['group']
+    if msg in ['咕咕次数']:
+        users = await User.filter(group=group)
+        l = []
+        for u in users:
+            if u.absent > 0:
+                l.append({
+                    "name": u.name,
+                    "absent": u.absent
+                })
+            l.sort(key=lambda x:x['absent'], reverse=True)
+        reply = '本群咕咕次数榜前三:'
+        for index, s in enumerate(l[:3]):
+            reply += f'\n{index+1}. {s["name"]} 咕了 {s["absent"]} 次'
+        return reply
+    if user.auth[1] != '1':
+        return '您没有权限记录咕咕次数'
+    try:
+        qq = re.search(r'\[CQ:at,qq=(.*?)\]', msg).group(1)
+    except:
+        return ''
+    gUser = await User.get_or_none(qq=qq, group=group)
+    if not gUser:
+        return ''
+    gUser.absent = gUser.absent + 1
+    await gUser.save()
+    return f'咕咕可耻! {gUser.name} 咕咕次数+1'
+
 async def getClients(context):
     user = context['info']['user']
     group = context['info']['group']
@@ -316,7 +351,7 @@ async def editName(context):
             user.name = a[1]
             await user.save()
             await sendData(group.group, context['info']['bot'], getUserDetail(user, 'putUser'))
-            return f'{user.qq}成功修改昵称为{a[1]},修改昵称群内CD5秒 建议去网页修改'
+            return f'{user.qq}成功修改昵称为{a[1]}'
         if len(a) == 3 and a[2].isdigit():
             if user.auth[0] == '0': return '对不起,您没有权限修改他人昵称'
             try:
@@ -379,4 +414,34 @@ async def setSignAuth(context):
     return f"团队权限修改成功回复 查看团队 {teamNum} 即可查看"
 
 
+async def openReplace(context):
+    group = context['info']['group']
+    user = context['info']['user']
+    if user.auth[1] == '0': return '对不起,您没有权限修改代报名权限'
+    group.canReplace = True
+    await group.save()
+    return '代报名已开启'
 
+async def closeReplace(context):
+    group = context['info']['group']
+    user = context['info']['user']
+    if user.auth[1] == '0': return '对不起,您没有权限修改代报名权限'
+    group.canReplace = False
+    await group.save()
+    return '代报名已关闭'
+
+async def openGold(context):
+    group = context['info']['group']
+    user = context['info']['user']
+    if user.auth[1] == '0': return '对不起,您没有权限修改代报名权限'
+    group.canGold= True
+    await group.save()
+    return '代报名已开启'
+
+async def closeGold(context):
+    group = context['info']['group']
+    user = context['info']['user']
+    if user.auth[1] == '0': return '对不起,您没有权限修改代报名权限'
+    group.canGold = False
+    await group.save()
+    return '代报名已关闭'

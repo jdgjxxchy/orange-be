@@ -50,3 +50,9 @@ async def exitGroup(context):
         return f"已退出{group}"
     except:
         return "退群失败"
+
+
+async def restart(context):
+    bot = context['info']['bot']
+    await bot.set_restart_plugin(delay=1000)
+    return "重启成功"

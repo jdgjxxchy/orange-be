@@ -89,6 +89,8 @@ async def getYao(context):
 
 @gap('gold', 100)
 async def getGold(context):
+    group = context['info']['group']
+    if not group.canGold: return ''
     area, _ = find_in_dic(context['message'], areaDict)
     res = await Gold.get_or_none(area=area)
     if res:

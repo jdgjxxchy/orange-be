@@ -34,7 +34,7 @@ async def createTeam(user, data):
     if user.auth[1] != '1':
         return json.dumps({'req': 'error', 'data':'您没有增加团队的权限, 请联系群管理员修改权限'})
     group = await user.group
-    teams = await Team.filter(group=group).all()
+    teams = await Team.filter(group=group, delete_at=None).all()
     if len(teams) >= group.maxTeam:
         return json.dumps({'req': 'error', 'data': '团队数量已达上限, 请联系小橙作者增加上限'})
     team = await Team.create(qq=user.qq, name=data['name'], startTime=data['startTime'], tip=data['tip'], sign=data['sign'],group=group)

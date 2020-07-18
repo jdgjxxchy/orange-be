@@ -29,6 +29,8 @@ class Group(BaseModel):
     maxTeam = fields.IntField(default=3)
     maxTemplate = fields.IntField(default=2)
     maxQA = fields.IntField(default=2)
+    canReplace = fields.BooleanField(default=True)
+    canGold = fields.BooleanField(default=True)
 
 
     class Meta:
@@ -40,7 +42,7 @@ class User(BaseModel):
 
     qq = fields.CharField(max_length=20, index=True)
     name = fields.CharField(max_length=100)
-    group = fields.ForeignKeyField('models.Group', related_name='users')
+    group = fields.ForeignKeyField('models.Group', related_name='users', on_delete='CASCADE')
     # 0011 1. 群里权限, 2. 是否可以操作团队 3. 报名权限 4. 登记老板权限
     auth = fields.CharField(max_length=20, default='0011')
 
@@ -64,7 +66,7 @@ class Team(BaseModel):
     startTime = fields.CharField(max_length=100)
     tip = fields.CharField(max_length=100, default='')
     sign = fields.IntField(default=1)
-    group = fields.ForeignKeyField("models.Group", related_name="teams")
+    group = fields.ForeignKeyField("models.Group", related_name="teams", on_delete='CASCADE')
     delete_at = fields.DatetimeField(null=True, default=None)
     create_at = fields.DatetimeField(auto_now_add=True)
     update_at = fields.DatetimeField(auto_now=True)
@@ -76,7 +78,7 @@ class Template(BaseModel):
     qq = fields.CharField(max_length=100)
     name = fields.CharField(max_length=100)
     members = fields.CharField(max_length=5000, default=blank)
-    group = fields.ForeignKeyField("models.Group", related_name='templates')
+    group = fields.ForeignKeyField("models.Group", related_name='templates', on_delete='CASCADE')
 
 
     class Meta:
@@ -129,7 +131,7 @@ class Hong(BaseModel):
 
 class CustomQA(BaseModel):
 
-    group = fields.ForeignKeyField("models.Group", related_name="qas")
+    group = fields.ForeignKeyField("models.Group", related_name="qas", on_delete='CASCADE')
     question = fields.CharField(max_length=200, index=True)
     answer = fields.CharField(max_length=200)
 
