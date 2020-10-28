@@ -150,9 +150,9 @@ async def drawTeam(team, group):
         if 'player' in dic:
             if 'id' in dic['player']:
                 user = await User.get_or_none(id=dic['player']['id'])
-                if user: nickname = user.name
                 if 'sign_name' in dic['player']:
                     nickname = dic['player']['sign_name']
+                elif user: nickname = user.name
                 else: nickname = '已删除群员'
                 signedPlayer += 1
             elif 'name' in dic['player']:

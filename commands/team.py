@@ -165,13 +165,13 @@ async def signUp(context):
         alt.append({
             "id": user.id,
             "occu": occuIndex,
-            "name": sign_name
+            "sign_name": sign_name
         })
         team.alternate = json.dumps(alt, ensure_ascii=False)
         await team.save()
         await sendData(group.group, context['info']['bot'], getTeamDetail(team))
         return '没有报名的位置拉, 已将您报名的该职业加入替补列表, 团长安排的时候会在网页的替补名单看到您.'
-    members[position]['player'] = { "id" :user.id, "name": sign_name }
+    members[position]['player'] = { "id" :user.id, "sign_name": sign_name }
     members[position]['occu'] = occuIndex
     if isDouble: members[position]['double'] = True
     team.members = json.dumps(members, ensure_ascii=False)
