@@ -199,14 +199,14 @@ async def getMoney(user, data, bot):
     for i in data:
         days = i['days']
         index += 1
-        s = f'[CQ:image,file=file:///{BASE_DIR}\image\cuifei.png]'
         if days > 0:
-            text = f'{s}\n小橙还有{days}天就要到时间拉'
+            text = f'小橙还有{days}天就要到时间拉'
         elif days == 0:
-            text = f'{s}\n小橙今天结束就要到时间拉'
+            text = f'小橙今天结束就要到时间拉'
         else:
-            text = f'{s}\n小橙已经过期{-days}天拉'
+            text = f'小橙已经过期{-days}天拉'
         try:
+            text += f'\n续费, 反馈请加群1154625773'
             await bot.send_group_msg(self_id=i['robot'], group_id=i['group'], message=text)
         except:
             err.append(str(i['group']))

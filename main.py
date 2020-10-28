@@ -25,7 +25,8 @@ bot.logger.setLevel(30)
 
 register_tortoise(
     bot.server_app,
-    db_url="mysql://root:Jdgjxxchy_0820@localhost:3306/orange",
+    # db_url="mysql://root:Jdgjxxchy_0820@localhost:3306/orange",
+    db_url="mysql://root:Hpxt2020hpxt!@47.101.173.121:3306/orange",
     # db_url="mysql://root:Hpxt2020hpxt!@localhost:3306/orange",
     modules={"models": ["models"]},
     generate_schemas=True,
@@ -42,12 +43,12 @@ async def init():
 async def handle_group_msg(context):
     from commands.url import parse_group
     context['info'] = { "bot" :bot }
-    # now = time.time()
+    now = time.time()
     reply = await parse_group(context)
-    # print(time.time() - now)
+    print(time.time() - now)
     if reply:
         del context['info']
-        # print(reply)
+        print(reply)
         try:
             await bot.send(context, message=reply)
             pass
@@ -66,7 +67,7 @@ async def handle_private_msg(context):
 @bot.on_request('friend')
 async def handle_request(context):
     reply = "你好! 我是QQ小橙, 是个团队排表机器人\n" \
-            "如果要引入我或者提交bug请加群716860454"
+            "如果要引入我或者提交bug请加群1154625773"
     await bot.set_friend_add_request(self_id=context['self_id'], flag=context['flag'], approve=True)
     await bot.send(context, message=reply)
 
@@ -110,5 +111,5 @@ if __name__ == '__main__':
     bot.run(
         host='0.0.0.0',
         port=9999,
-        debug=False,
+        debug=True,
     )

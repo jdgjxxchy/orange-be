@@ -27,7 +27,7 @@ async def getHong(context):
     occu, _ = find_in_dic(context['message'], occuDic)
     hong = await Hong.filter(Q(occu=occu), Q(group=group) | Q(group='0')).order_by('-group').all()
     if len(hong) > 0:
-        content = hong[0].content
+        content = hong[0].content.replace('&#91', '[').replace('&#93', ']')
         if content == '':
             return ''
         if hong[0].group != '0':

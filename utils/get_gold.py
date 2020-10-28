@@ -23,7 +23,7 @@ def parse5173(content):
     gold = re.findall('<li><b>1元=(\d+.\d*)</b>金', content)
     gold = list(map(float, gold))
     gold.sort(reverse=True)
-    return list(map(int, gold[:5]))
+    return list(map(int, gold[2:7]))
 
 
 async def getLastUrl(req, url):
@@ -52,6 +52,8 @@ def parsePost(content):
             gold = int(re.search('(\d\d\d\d*).*?出', i.text(), re.S).group(1))
             if gold < 2000 and gold > 300:
                 posts.append(gold)
+            if gold < 10:
+                posts.append(gold * 100)
         except:
             pass
     return posts

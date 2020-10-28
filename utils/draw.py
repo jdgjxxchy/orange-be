@@ -53,6 +53,7 @@ class Canvas():
         Image.open('./src/bd.png'), # 霸刀
         Image.open('./src/pl.png'), # 蓬莱
         Image.open('./src/lx.png'), # 凌雪
+        Image.open('./src/yt.png'), # 凌雪
 
     ]
 
@@ -62,7 +63,7 @@ class Canvas():
         # self.canvas = Image.new('RGB', (width * 5 + 5, height * 5 + 5), '#fff')
         self.left = 48
         self.top = 85
-        self.canvas = Image.new("RGB", [1100, 550], (233, 233, 233))
+        self.canvas = Image.new("RGB", [1100, 570], (233, 233, 233))
         self.draw = ImageDraw.Draw(self.canvas)
         self.alpha = Image.new('L', self.canvas.size, 255)
         for i in range(0, 6):
@@ -115,9 +116,12 @@ class Canvas():
     def setTitle(self, title):
         ImageDraw.Draw(self.canvas).text((self.left, 20), title.center(120 - len(title) * 2), (0, 0, 0), font=self.font3)
 
-    def setTip(self, tip):
+    def setTip(self, tip, ad):
         if tip:
             ImageDraw.Draw(self.canvas).text((self.left, 500), '团队备注:' + tip, (25, 25, 112), font=self.font4)
+        if ad:
+            ImageDraw.Draw(self.canvas).text((self.left + 640, 500), '麒麟纯手动日常 全区服纯手动接日常', (25, 25, 112), font=self.font4)
+            ImageDraw.Draw(self.canvas).text((self.left + 640, 530), '非手动十倍退还 联系方式: 709861888', (25, 25, 112), font=self.font4)
 
 
 def imageToBase64(image):
@@ -135,7 +139,7 @@ async def drawTeam(team, group):
     members = json.loads(team.members)
     title = team.startTime + '  ' + group.name + '团  ' + team.name
     img = Canvas(200, 80)
-    img.setTip(team.tip)
+    img.setTip(team.tip, False)
     signedPlayer = 0
     signedClient = 0
     for dic in members:
@@ -147,6 +151,8 @@ async def drawTeam(team, group):
             if 'id' in dic['player']:
                 user = await User.get_or_none(id=dic['player']['id'])
                 if user: nickname = user.name
+                if 'sign_name' in dic['player']:
+                    nickname = dic['player']['sign_name']
                 else: nickname = '已删除群员'
                 signedPlayer += 1
             elif 'name' in dic['player']:
@@ -176,5 +182,5 @@ async def drawTeam(team, group):
     str = imageToBase64(img.canvas)
     s = f'[CQ:image,file=base64://{str}]'
     url = 'https://orange.arkwish.com'
-    s += f'更多功能至浏览器打开: {url}'
+    s += f'若看不到图请点击链接: {url}\n所有群员都可以通过自己的qq号和初始密码123456登录.'
     return s

@@ -59,8 +59,8 @@ startswith_group = {
     '开服': monitorArea,
     # '副本': getFB,
     # '攻略': getFB,
-    '开启金价': openReplace,
-    '关闭金价': closeReplace,
+    '开启金价': openGold,
+    '关闭金价': closeGold,
 
     #管理开关
     # '功能开关' : funcOpen,
@@ -117,7 +117,7 @@ async def parse_private(context):
     if context['user_id'] != 986859110:
         if 'CQ:rich' in context['message']:
             return ''
-        return "你好! 我是QQ小橙, 是个团队排表机器人!\n如果要引入或者续费 请加QQ群716860454"
+        return "你好! 我是QQ小橙, 是个团队排表机器人!\n如果要引入或者续费 请加QQ群1154625773"
     context['message'] = re.sub(' +', ' ', context['message']).strip()
     for start in startswith_private:
         if context['message'].startswith(start):

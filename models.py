@@ -31,6 +31,7 @@ class Group(BaseModel):
     maxQA = fields.IntField(default=2)
     canReplace = fields.BooleanField(default=True)
     canGold = fields.BooleanField(default=True)
+    ad = fields.BooleanField(default=True)
 
 
     class Meta:

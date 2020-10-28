@@ -82,7 +82,7 @@ async def delete_repeat():
 async def delete_expire():
     groups = await Group.all()
     for group in groups:
-        now = datetime.date.today() - datetime.timedelta(days=2)
+        now = datetime.date.today() - datetime.timedelta(days=3)
         if now > group.expire:
             async for user in group.users:
                 await user.delete()
@@ -94,6 +94,17 @@ async def delete_expire():
             await group.delete()
 
 
+async def add_days():
+    groups = await Group.all()
+    for group in groups:
+        now = datetime.date.today()
+        if now < group.expire:
+            add_day = group.expire + datetime.timedelta(days=0)
+            group.expire = add_day
+            await group.save()
+
+
+
 async def run():
     await Tortoise.init(
         # db_url="mysql://root:jdgjxxchy_0820@localhost:3306/orange",
@@ -103,6 +114,8 @@ async def run():
 
     await delete_repeat()
     await delete_expire()
+    # await add_days()
 
 if __name__ == "__main__":
     run_async(run())
+

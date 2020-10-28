@@ -106,7 +106,7 @@ async def signUp(context):
     import time
 
     if context['message'] in ['报名', '我要报名']:
-        return "报名格式: 我要报名 职业 团队编号\n团队编号请回复 查看团队 获取\n职业和团队编号之间要有空格,团队编号不填默认为1"
+        return "报名格式: 我要报名 职业 团队编号 角色名称\n回复 查看团队 获取团队编号"
     user = context['info']['user']
     group = context['info']['group']
     teams = await Team.filter(group=group, delete_at=None).all()
@@ -115,13 +115,16 @@ async def signUp(context):
         return "管理员设置了禁止代报名 可以联系管理员去网页帮填"
     a = context['message'].replace('报名', '').replace('我要', '').replace('代','').strip().split(' ')
     occu, occuOrigin = find_in_dic(context['message'], occuDic)
-    if not occu or (a[0].replace(occuOrigin, '').replace('双修','').replace('双休','') != ''):
+    if not occu:
         return '报名命令:[我要报名 职业 团队序号]空格隔开 如果没有序号默认报名1号团队\n职业名请填写剑网三职业'
     occuIndex = occuList.index(occu)
     teamNum = 0
     if len(a) > 1:
         if a[1].isdigit(): teamNum = int(a[1]) - 1
         else: return "团队编号必须为数字 例如 报名 花间 2"
+    sign_name = user.name
+    if len(a) > 2:
+        sign_name = a[2]
     if teamNum > len(teams) - 1 or teamNum < 0: return f'没有编号为{teamNum+1}的团'
     team = teams[teamNum]
     if int(user.auth[2]) < team.sign: return '您不可以在该团队报名或者代开, 请联系团长调整您的权限'
@@ -162,12 +165,13 @@ async def signUp(context):
         alt.append({
             "id": user.id,
             "occu": occuIndex,
+            "name": sign_name
         })
         team.alternate = json.dumps(alt, ensure_ascii=False)
         await team.save()
         await sendData(group.group, context['info']['bot'], getTeamDetail(team))
         return '没有报名的位置拉, 已将您报名的该职业加入替补列表, 团长安排的时候会在网页的替补名单看到您.'
-    members[position]['player'] = { "id" :user.id }
+    members[position]['player'] = { "id" :user.id, "name": sign_name }
     members[position]['occu'] = occuIndex
     if isDouble: members[position]['double'] = True
     team.members = json.dumps(members, ensure_ascii=False)
@@ -433,15 +437,15 @@ async def closeReplace(context):
 async def openGold(context):
     group = context['info']['group']
     user = context['info']['user']
-    if user.auth[1] == '0': return '对不起,您没有权限修改代报名权限'
-    group.canGold= True
+    if user.auth[1] == '0': return '对不起,您没有权限修改金价权限'
+    group.canGold = True
     await group.save()
-    return '代报名已开启'
+    return '金价已开启'
 
 async def closeGold(context):
     group = context['info']['group']
     user = context['info']['user']
-    if user.auth[1] == '0': return '对不起,您没有权限修改代报名权限'
+    if user.auth[1] == '0': return '对不起,您没有权限修改金价权限'
     group.canGold = False
     await group.save()
-    return '代报名已关闭'
+    return '金价已关闭'
