@@ -42,7 +42,7 @@ class Group(BaseModel):
 class User(BaseModel):
 
     qq = fields.CharField(max_length=20, index=True)
-    name = fields.CharField(max_length=100)
+    name = fields.CharField(max_length=100, null=True)
     group = fields.ForeignKeyField('models.Group', related_name='users', on_delete='CASCADE')
     # 0011 1. 群里权限, 2. 是否可以操作团队 3. 报名权限 4. 登记老板权限
     auth = fields.CharField(max_length=20, default='0011')

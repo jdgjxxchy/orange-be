@@ -15,6 +15,7 @@ from quart import request
 from config import REDIS
 from utils.Request import Request
 from quart_cors import route_cors
+from commands.other import refresh_group_member
 
 import aioredis
 import asyncio
@@ -25,8 +26,8 @@ bot.logger.setLevel(30)
 
 register_tortoise(
     bot.server_app,
-    # db_url="mysql://root:Jdgjxxchy_0820@localhost:3306/orange",
-    db_url="mysql://root:Hpxt2020hpxt!@47.101.173.121:3306/orange",
+    db_url="mysql://root:Jdgjxxchy_0820@localhost:3306/orange",
+    # db_url="mysql://root:Jdgjxxchy_0820@124.70.142.171:3306/orange",
     # db_url="mysql://root:Hpxt2020hpxt!@localhost:3306/orange",
     modules={"models": ["models"]},
     generate_schemas=True,
@@ -37,7 +38,7 @@ async def init():
     from utils.common import saveGold
     bot.req = Request()
     bot.redis = await aioredis.create_redis_pool(REDIS)
-    asyncio.ensure_future(saveGold(bot.req))
+    # asyncio.ensure_future(saveGold(bot.req))
 
 @bot.on_message('group')
 async def handle_group_msg(context):
@@ -77,15 +78,21 @@ async def handle_group_request(context):
     context['bot'] = bot
     await handle_request(context)
 
+@bot.on_notice('group_increase')
+async def handle_group_request(context):
+    print('群人员增加')
+    await refresh_group_member(context, bot)
+
+@bot.on_notice('group_decrease')
+async def handle_group_request(context):
+    print('群人员减少')
+    await refresh_group_member(context, bot)
+
 @bot.on_meta_event('lifecycle.connect')
 async def connect_bot(context):
     print(context)
     robot_qq = context['self_id']
     await bot.send_private_msg(user_id=986859110, self_id=robot_qq, message='我连上了')
-    await bot.clean_data_dir(data_dir='image')
-    await bot.clean_data_dir(data_dir='record')
-    await bot.clean_data_dir(data_dir='show')
-    await bot.clean_data_dir(data_dir='bface')
 
 @bot.server_app.websocket('/team/<group>')
 async def on_ws_team(group):
@@ -100,7 +107,7 @@ async def on_handle_index(command):
     return await handle_http(command, bot, token)
 
 @bot.server_app.route('/login', methods=["POST", "OPTIONS"])
-@route_cors()
+@route_cors(allow_methods=["*"])
 async def handle_login():
     from views.handlers import login
     form = await request.json

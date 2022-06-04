@@ -54,6 +54,8 @@ class Canvas():
         Image.open('./src/pl.png'), # 蓬莱
         Image.open('./src/lx.png'), # 凌雪
         Image.open('./src/yt.png'), # 凌雪
+        Image.open('./src/wf.png'), # 无方 药宗dps
+        Image.open('./src/ls.png'), # 灵素 药宗奶
 
     ]
 
@@ -87,7 +89,7 @@ class Canvas():
 
         return alpha
 
-    def setPlayer(self, num, occu, name, clientCall, isDouble):
+    def setPlayer(self, num, occu, name, clientCall, isDouble, isGong):
         x = num % 5 * self.width
         y = num // 5 * self.height
         name2 = clientCall + '喊的老板' if clientCall else ''
@@ -102,6 +104,9 @@ class Canvas():
         self.draw.text((x + self.left, y + self.top + 50), name2.center(50 - len(name2) * 2), "#000", font=self.font2)
         if isDouble:
             self.draw.text((x + self.left +self.width - 25, y + self.top), '双', "#000", font=self.font4)
+        if isGong:
+            self.draw.text((x + self.left + self.width - 25, y + self.top + self.height - 25), '工', "#000", font=self.font4)
+
 
     def setOccus(self, index, ol):
         x = index % 5 * self.width
@@ -150,7 +155,7 @@ async def drawTeam(team, group):
         if 'player' in dic:
             if 'id' in dic['player']:
                 user = await User.get_or_none(id=dic['player']['id'])
-                if 'sign_name' in dic['player']:
+                if 'sign_name' in dic['player'] and dic['player']['sign_name']:
                     nickname = dic['player']['sign_name']
                 elif user: nickname = user.name
                 else: nickname = '已删除群员'
@@ -172,9 +177,10 @@ async def drawTeam(team, group):
                 nickname = ''
             name2 = nickname[:6] if len(nickname) > 6 else nickname
         isDouble = 'double' in dic and dic['double'] or ('mustDouble' in dic)
+        isGong = 'isGong' in dic and dic['isGong']
         if 'occu' in dic or ('occuList' in dic and len(dic['occuList']) == 1):
             occu = dic['occu'] if 'occu' in dic else dic['occuList'][0]
-            img.setPlayer(i, occu, name, name2, isDouble)
+            img.setPlayer(i, occu, name, name2, isDouble, isGong)
         else:
             img.setOccus(i, dic['occuList'])
         i += 1
@@ -182,5 +188,6 @@ async def drawTeam(team, group):
     str = imageToBase64(img.canvas)
     s = f'[CQ:image,file=base64://{str}]'
     url = 'https://orange.arkwish.com'
-    s += f'若看不到图请点击链接: {url}\n所有群员都可以通过自己的qq号和初始密码123456登录.'
+    # s += f'若看不到图请点击链接: {url}\n所有群员都可以通过自己的qq号和初始密码123456登录.'
+    s += f'调队,编辑等功能请访问小橙排表网页'
     return s

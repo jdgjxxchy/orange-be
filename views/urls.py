@@ -32,8 +32,12 @@ async def handleData(user, bot, data):
     }
     if data['req'] == 'putGold':
         res = await putGold(user, data['data'], bot)
-    elif data['req'] == 'getMoney':
+    elif data['req'] in 'getMoney':
         res = await getMoney(user, data['data'], bot)
+    elif data['req'] in 'exitGroup':
+        res = await exitGroup(user, data['data'], bot)
+    elif data['req'] in 'sendAll':
+        res = await sendAll(user, data['data'], bot)
     else:
         res = await operate[data['req']](user, data['data'])
     await sendData(group, bot, res)

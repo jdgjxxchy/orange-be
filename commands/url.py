@@ -98,7 +98,7 @@ async def parse_group(context):
             return reply
     for end in endswith_group:
         if context['message'].strip().endswith(end):
-            reply =  await endswith_group[end](context)
+            reply = await endswith_group[end](context)
             return reply
     # reply = await customQA(context)
     # return reply

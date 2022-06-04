@@ -59,34 +59,36 @@ async def preHandle(context):
     expire = group.expire
     if now > expire:
         return True
-    user = await User.filter(qq=str(context['user_id']), group=group)
-    if len(user) == 0:
+    try:
+        user, isNotExist = await User.get_or_create(qq=str(context['user_id']), group=group)
+
         if 'card' not in context['sender']:
             return True
-        nickname = context['sender']['card'] if context['sender']['card'] else context['sender']['nickname']
-        user = await User(qq=context['user_id'], group=group, name='')
-        user.name = nickname
-        if context['sender']['role'] == 'owner':
-            user.auth = '2111'
-        elif context['sender']['role'] == 'admin':
-            user.auth = '1111'
-        try:
-            await user.save()
-        except:
-            user.name = str(context['user_id'])
-            await user.save()
-        finally:
+        if isNotExist:
+            nickname = context['sender']['card'] if context['sender']['card'] else context['sender']['nickname']
+            user.name = nickname
+            if context['sender']['role'] == 'owner':
+                user.auth = '2111'
+            elif context['sender']['role'] == 'admin':
+                user.auth = '1111'
+            try:
+                await user.save()
+            except:
+                user.name = str(context['user_id'])
+                await user.save()
             await sendData(group.group, context['info']['bot'], getUserDetail(user, 'createUser'))
-            context['info']['user'] = user
-            return False
-    elif len(user) > 1:
+        context['info']['user'] = user
+        return False
+    except:
+        user = await User.filter(qq=str(context['user_id']), group=group)
         name = ''
         for u in user[1:]:
             name += u.qq + ' '
+            await u.delete()
         name += f'\n查询的条件为 qq={str(context["user_id"])}, group={group.group}'
         await context['info']['bot'].send_private_msg(user_id=986859110, self_id=context['self_id'], message=name)
-    context['info']['user'] = user[0]
-    return False
+        context['info']['user'] = user[0]
+        return False
 
 
 def getString(length=10):

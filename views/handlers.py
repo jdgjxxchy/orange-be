@@ -85,6 +85,7 @@ async def delUser(user, data):
     for u in users:
         await u.delete()
     return json.dumps({'req': 'delUser', 'data': data})
+    # return json.dumps({'req': 'error', 'data': '此功能暂时关闭, 请联系小橙管理员'})
 
 async def createTemplate(user, data):
     if user.auth[1] != '1':
@@ -211,3 +212,22 @@ async def getMoney(user, data, bot):
         except:
             err.append(str(i['group']))
     return json.dumps({'req': 'putHong', 'data': f'催费成功{str(index)}个群, {" ".join(err)}失败'})
+
+
+async def exitGroup(user, data, bot):
+    if user.qq != '986859110':
+        return json.dumps({'req': 'error', 'data': '你谁?调用这个接口?'})
+    for i in data:
+        await bot.set_group_leave(self_id=i['robot'], group_id=i['group'])
+    return json.dumps({'req': 'putHong', 'data': f'退群完成'})
+
+
+async def sendAll(user, data, bot):
+    if user.qq != '986859110':
+        return json.dumps({'req': 'error', 'data': '你谁?调用这个接口?'})
+    robot_list = bot._wsr_api_clients.copy()
+    for robot in robot_list:
+        groups = await bot.get_group_list(self_id=int(robot))
+        for group in groups:
+            await bot.send_group_msg(self_id=int(robot), group_id=group['group_id'], message=data)
+    return json.dumps({'req': 'putHong', 'data': f'群发成功'})

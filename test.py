@@ -93,28 +93,52 @@ async def delete_expire():
             print(group.group + '已清理')
             await group.delete()
 
+async def test2():
+    groups = await Group.filter(group=637200599)
+    for group in groups:
+            print(group)
+        # now = datetime.date.today() - datetime.timedelta(days=3)
+        # if now > group.expire:
+            async for user in group.users:
+                print(user)
+                await user.delete()
+            async for team in group.teams:
+                print(team)
+
+                await team.delete()
+            async for tem in group.templates:
+                await tem.delete()
+            print(group.group + '已清理')
+            # await group.delete()
+
 
 async def add_days():
     groups = await Group.all()
     for group in groups:
-        now = datetime.date.today()
+        now = datetime.date.today() - datetime.timedelta(days=3)
         if now < group.expire:
-            add_day = group.expire + datetime.timedelta(days=0)
+            add_day = group.expire + datetime.timedelta(days=15)
             group.expire = add_day
             await group.save()
 
 
+async def test():
+    group = await Group.get(group='429729393')
+    user, isExist = await User.get_or_create(qq='9868591110', group=group)
+    print(user, isExist)
 
 async def run():
     await Tortoise.init(
         # db_url="mysql://root:jdgjxxchy_0820@localhost:3306/orange",
-        db_url="mysql://root:Hpxt2020hpxt!@47.101.173.121:3306/orange",
+        db_url="mysql://root:Jdgjxxchy_0820@124.70.142.171:3306/orange",
         modules={"models": ["models"]},
     )
 
     await delete_repeat()
     await delete_expire()
     # await add_days()
+    # await test()
+    # await test2()
 
 if __name__ == "__main__":
     run_async(run())

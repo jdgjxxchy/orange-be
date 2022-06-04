@@ -29,9 +29,9 @@ async def startTeam(context):
     if context['message'] == '开团':
         return  \
             '开团指令为:"开团 副本类型 时间"\n' \
-            '[副本类型]为("挑战jmw", "挑战ttd", "普通敖龙岛", "英雄敖龙岛"),必填\n' \
+            '[副本类型]为("雷域大泽", "普通雷域大泽"等),必填\n' \
             '[时间]为("今天X点","a月b日X点") 等只要你能看得懂的(建议填完整时间 必填)\n' \
-            '例如:[开团 英雄敖龙岛 今天七点][开团 英雄hxl 今天八点半 1]\n'
+            '例如:[开团 雷域大泽 今天七点][开团 普通雷域大泽 今天八点半 1]\n'
     a = context['message'].replace('开团', '').strip().split(' ')
     user = context['info']['user']
     if len(a[0]) > 6 : return ''
@@ -39,7 +39,7 @@ async def startTeam(context):
     if len(a) < 2: return '开团请写清楚 副本类型 和 开团时间哦'
     if a[0] not in teamType: return '请输入正确的副本团队. 回复"开团"获取帮助'
     if len(teams) >= group.maxTeam: return '抱歉,我们群开的团到达上限 请先取消已经开的团或者联系QQ986859110增加开团上限'
-    text = f'开团成功! {group.name} 团的 {a[0]} 将于 {a[1]} 准时出发!取消开团请回复 取消开团 团队编号'
+    text = f'{group.name} 团的 {a[0]} 将于 {a[1]} 出发 [取消开团 团队编号]'
     template = None
     if len(a) > 2:
         templateId = a[2]
@@ -84,12 +84,11 @@ async def getTeam(context):
     teams = await Team.filter(group=group, delete_at=None).all()
     if context['message'] in ['查看团队']:
         if not teams: return '目前没有人在开团, 请联系管理员开团'
-        text = '本群有以下团\n'
+        text = ''
         for index, team in enumerate(teams, start=1):
-            text += f'{index}. 于{team.startTime}开的{team.name},权限:{team.sign}\n'
+            text += f'{index}. {team.startTime} {team.name} 权限{team.sign}\n'
         url = 'https://orange.arkwish.com'
-        text += '[查看团队 团队编号] 查看具体信息\n' \
-                '更多功能及使用说明至浏览器打开:  ' + url
+        text += '[查看团队 团队编号]'
         return text
     a = context['message'].replace('查看团队', '').strip().split(' ')
     if len(a) != 1 or not a[0].isdigit(): return '请输入正确的团队编号 例如[查看团队 1]'
@@ -106,23 +105,24 @@ async def signUp(context):
     import time
 
     if context['message'] in ['报名', '我要报名']:
-        return "报名格式: 我要报名 职业 团队编号 角色名称\n回复 查看团队 获取团队编号"
+        return "报名格式: 报名 职业 团队编号 角色名称\n回复 查看团队 获取团队编号"
     user = context['info']['user']
     group = context['info']['group']
     teams = await Team.filter(group=group, delete_at=None).all()
     isD = '代' in context['message']
+    isGong = '工具人' in context['message']
     if isD and group.canReplace == False:
         return "管理员设置了禁止代报名 可以联系管理员去网页帮填"
-    a = context['message'].replace('报名', '').replace('我要', '').replace('代','').strip().split(' ')
+    a = context['message'].replace('报名', '').replace('我要', '').replace('代', '').replace('工具人', '').strip().split(' ')
     occu, occuOrigin = find_in_dic(context['message'], occuDic)
     if not occu:
-        return '报名命令:[我要报名 职业 团队序号]空格隔开 如果没有序号默认报名1号团队\n职业名请填写剑网三职业'
+        return '报名命令:[我要报名 职业 团队序号 角色名称]空格隔开 如果没有序号默认报名1号团队\n职业名请填写剑网三职业'
     occuIndex = occuList.index(occu)
     teamNum = 0
     if len(a) > 1:
         if a[1].isdigit(): teamNum = int(a[1]) - 1
-        else: return "团队编号必须为数字 例如 报名 花间 2"
-    sign_name = user.name
+        else: return "团队编号必须为数字 例如 报名 花间 2 花间ID"
+    sign_name = ''
     if len(a) > 2:
         sign_name = a[2]
     if teamNum > len(teams) - 1 or teamNum < 0: return f'没有编号为{teamNum+1}的团'
@@ -170,14 +170,15 @@ async def signUp(context):
         team.alternate = json.dumps(alt, ensure_ascii=False)
         await team.save()
         await sendData(group.group, context['info']['bot'], getTeamDetail(team))
-        return '没有报名的位置拉, 已将您报名的该职业加入替补列表, 团长安排的时候会在网页的替补名单看到您.'
+        return '没有报名的位置拉, 已加入替补列表, 可在网页的替补名单看到.'
     members[position]['player'] = { "id" :user.id, "sign_name": sign_name }
     members[position]['occu'] = occuIndex
     if isDouble: members[position]['double'] = True
+    if isGong: members[position]['isGong'] = True
     team.members = json.dumps(members, ensure_ascii=False)
     await team.save(update_fields=["members", "alternate"])
     await sendData(group.group, context['info']['bot'], getTeamDetail(team))
-    return f'{user.name}成功报名于{team.startTime}发车的{team.name}\n查看团队情况 请回复"查看团队 {teamNum+1}" 取消报名请回复"取消报名 {teamNum+1}" '
+    return f'{user.name}成功报名于{team.startTime}发车的{team.name}\n查看团队 {teamNum+1} | 取消报名 {teamNum+1} '
 
 # 取消报名
 async def cancelSignUp(context):
