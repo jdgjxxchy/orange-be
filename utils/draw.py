@@ -56,6 +56,7 @@ class Canvas():
         Image.open('./src/yt.png'), # 凌雪
         Image.open('./src/wf.png'), # 无方 药宗dps
         Image.open('./src/ls.png'), # 灵素 药宗奶
+        Image.open('./src/dz.png'), # 灵素 药宗奶
 
     ]
 
