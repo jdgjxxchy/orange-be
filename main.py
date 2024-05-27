@@ -11,8 +11,8 @@
 """
 from tortoise.contrib.quart import register_tortoise
 from aiocqhttp import CQHttp
-from quart import request
-from config import REDIS
+from quart import request, jsonify
+from config import REDIS, MYSQL
 from utils.Request import Request
 from quart_cors import route_cors
 from commands.other import refresh_group_member
@@ -26,7 +26,7 @@ bot.logger.setLevel(30)
 
 register_tortoise(
     bot.server_app,
-    db_url="mysql://root:Jdgjxxchy_0820@localhost:3306/orange",
+    db_url=MYSQL,
     # db_url="mysql://root:Jdgjxxchy_0820@124.70.142.171:3306/orange",
     # db_url="mysql://root:Hpxt2020hpxt!@localhost:3306/orange",
     modules={"models": ["models"]},
@@ -112,6 +112,11 @@ async def handle_login():
     from views.handlers import login
     form = await request.json
     return await login(form['username'], form["password"], form["groupNumber"])
+
+@bot.server_app.route('/health', methods=["GET"])
+@route_cors(allow_methods=["*"])
+async def health():
+    return jsonify({"res":"success"})
 
 if __name__ == '__main__':
 

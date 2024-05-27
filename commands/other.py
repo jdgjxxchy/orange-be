@@ -26,7 +26,7 @@ async def handle_invite(context):
 async def refresh_group_member(context, bot):
     qq_group = await Group.get(group=context['group_id'])
     if context['user_id'] == context['self_id'] and context['notice_type'] == 'group_decrease':
-        await User.filter(group=qq_group).delete()
+        # await User.filter(group=qq_group).delete()
         return
     if not qq_group:
         return

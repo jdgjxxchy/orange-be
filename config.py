@@ -10,7 +10,13 @@
 
 """
 
+from environs import Env
+
+env = Env()
+env.read_env()
+
 DEBUG = False
 TIMINGDEBUG = True
-REDIS = 'redis://localhost'
+REDIS = env.str('REDIS_URL')
+MYSQL = env.str('MYSQL_URL')
 BASE_DIR = 'D:\\CQ\\'

@@ -125,9 +125,9 @@ class Canvas():
     def setTip(self, tip, ad):
         if tip:
             ImageDraw.Draw(self.canvas).text((self.left, 500), '团队备注:' + tip, (25, 25, 112), font=self.font4)
-        if ad:
-            ImageDraw.Draw(self.canvas).text((self.left + 640, 500), '麒麟纯手动日常 全区服纯手动接日常', (25, 25, 112), font=self.font4)
-            ImageDraw.Draw(self.canvas).text((self.left + 640, 530), '非手动十倍退还 联系方式: 709861888', (25, 25, 112), font=self.font4)
+        # if ad:
+        #     ImageDraw.Draw(self.canvas).text((self.left + 640, 500), '麒麟纯手动日常 全区服纯手动接日常', (25, 25, 112), font=self.font4)
+        #     ImageDraw.Draw(self.canvas).text((self.left + 640, 530), '非手动十倍退还 联系方式: 709861888', (25, 25, 112), font=self.font4)
 
 
 def imageToBase64(image):
@@ -189,6 +189,6 @@ async def drawTeam(team, group):
     str = imageToBase64(img.canvas)
     s = f'[CQ:image,file=base64://{str}]'
     url = 'https://orange.arkwish.com'
-    # s += f'若看不到图请点击链接: {url}\n所有群员都可以通过自己的qq号和初始密码123456登录.'
+    s += f'若看不到图请点击链接: {url}\n所有群员都可以通过自己的qq号和初始密码123456登录.'
     s += f'调队,编辑等功能请访问小橙排表网页'
     return s
